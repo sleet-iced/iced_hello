@@ -1,6 +1,4 @@
-use serde_json::json;
 use reqwest;
-use base64;
 use crate::config::NetworkConfig;
 
 #[derive(Debug, Clone)]
