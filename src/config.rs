@@ -7,6 +7,15 @@ pub struct NetworkConfig {
     pub contract_id: String,
 }
 
+impl NetworkConfig {
+    pub fn get_fastnear_url(&self) -> String {
+        match self.network_id.as_str() {
+            "mainnet" => String::from("https://rpc.web4.near.page"),
+            _ => String::from("https://rpc.web4.testnet.page")
+        }
+    }
+}
+
 impl Default for NetworkConfig {
     fn default() -> Self {
         Self {
