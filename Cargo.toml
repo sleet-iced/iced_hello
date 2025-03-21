@@ -20,6 +20,8 @@ near-api = "0.5.0"
 tokio = { version = "1.19.0", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+base64 = "0.13.0"
+reqwest = { version = "0.11", features = ["json"] }
 
 [build-dependencies]
 cargo-bundle = "0.6.0"
