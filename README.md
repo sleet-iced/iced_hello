@@ -12,6 +12,7 @@ cargo bundle --release
 cargo clean
 cargo check
 cargo test
+cargo update
 ```
 
 
