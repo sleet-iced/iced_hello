@@ -7,8 +7,9 @@ mod near;
 
 use near::NearClient;
 
-#[tokio::main]
-pub async fn main() -> iced::Result {
+pub fn main() -> iced::Result {
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let _guard = rt.enter();
     HelloApp::run(Settings::default())
 }
 

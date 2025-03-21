@@ -28,11 +28,11 @@ impl NearClient {
             .await?;
 
         if let Some(result) = response.get("result") {
-            if let Some(greeting) = result.as_str() {
-                Ok(greeting.to_string())
-            } else {
-                Err("Invalid greeting format".into())
-            }
+            // Remove surrounding quotes from the JSON string
+            let greeting = result.as_str()
+                .map(|s| s.trim_matches('"'))
+                .ok_or("Invalid greeting format")?;
+            Ok(greeting.to_string())
         } else {
             Err("No result field in response".into())
         }
