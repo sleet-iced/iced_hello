@@ -9,8 +9,8 @@ pub struct NetworkConfig {
 impl NetworkConfig {
     pub fn get_rpc_url(&self) -> String {
         match self.network_id.as_str() {
-            "mainnet" => String::from("https://rpc.web4.near.page"),
-            _ => String::from("https://rpc.web4.testnet.page")
+            "mainnet" => String::from("https://rpc.mainnet.near.org"),
+            _ => String::from("https://rpc.testnet.near.org")
         }
     }
 }

@@ -1,6 +1,8 @@
+use std::future::Future;
 use iced::widget::{button, column, text};
 use iced::{Application, Command, Element, Settings, Theme};
 use iced::executor;
+use std::io::Error;
 
 mod config;
 mod near;
@@ -8,14 +10,31 @@ mod near_test;
 
 use near::NearClient;
 
+#[derive(Debug)]
+struct TokioExecutor {
+    runtime: tokio::runtime::Runtime,
+}
+
+impl executor::Executor for TokioExecutor {
+    fn new() -> Result<Self, Error> {
+        let runtime = tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .map_err(|e| e)?;
+        let _guard = runtime.enter();
+        Ok(TokioExecutor { runtime })
+    }
+
+    fn spawn(&self, future: impl Future<Output = ()> + 'static + Send) {
+        let handle = self.runtime.handle().clone();
+        handle.spawn(future);
+    }
+}
+
 pub fn main() -> iced::Result {
-    let rt = tokio::runtime::Builder::new_multi_thread()
-        .enable_all()
-        .build()
-        .unwrap();
-    rt.block_on(async {
-        HelloApp::run(Settings::default())
-    })
+    let mut settings = Settings::default();
+    settings.default_text_size = 20.0;
+    HelloApp::run(settings)
 }
 
 #[derive(Debug, Default)]
@@ -35,7 +54,7 @@ enum Message {
 impl Application for HelloApp {
     type Message = Message;
     type Theme = Theme;
-    type Executor = executor::Default;
+    type Executor = TokioExecutor;
     type Flags = ();
 
     fn new(_flags: ()) -> (Self, Command<Message>) {
@@ -92,11 +111,13 @@ impl Application for HelloApp {
 
 impl HelloApp {
     async fn load_greeting(client: Option<NearClient>) -> Result<String, String> {
-        if let Some(client) = client {
-            client.get_greeting().await.map_err(|e| e.to_string())
-        } else {
-            Err("NEAR client not initialized".to_string())
-        }
+        tokio::task::spawn(async move {
+            if let Some(client) = client {
+                client.get_greeting().await.map_err(|e| e.to_string())
+            } else {
+                Err("NEAR client not initialized".to_string())
+            }
+        }).await.unwrap_or_else(|e| Err(e.to_string()))
     }
 }
 
