@@ -43,7 +43,8 @@ impl Application for HelloApp {
         match message {
             Message::Initialize => {
                 self.near_client = Some(NearClient::new());
-                Command::perform(Self::load_greeting(self.near_client.as_ref()), Message::GreetingLoaded)
+                let client = self.near_client.as_ref().cloned();
+                Command::perform(Self::load_greeting(client), Message::GreetingLoaded)
             }
             Message::GreetingLoaded(result) => {
                 match result {
@@ -58,7 +59,8 @@ impl Application for HelloApp {
                 Command::none()
             }
             Message::RefreshGreeting => {
-                Command::perform(Self::load_greeting(self.near_client.as_ref()), Message::GreetingLoaded)
+                let client = self.near_client.as_ref().cloned();
+                Command::perform(Self::load_greeting(client), Message::GreetingLoaded)
             }
         }
     }
@@ -82,7 +84,7 @@ impl Application for HelloApp {
 }
 
 impl HelloApp {
-    async fn load_greeting(client: Option<&NearClient>) -> Result<String, String> {
+    async fn load_greeting(client: Option<NearClient>) -> Result<String, String> {
         if let Some(client) = client {
             client.get_greeting().await.map_err(|e| e.to_string())
         } else {
