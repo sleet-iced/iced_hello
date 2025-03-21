@@ -8,9 +8,13 @@ mod near;
 use near::NearClient;
 
 pub fn main() -> iced::Result {
-    let rt = tokio::runtime::Runtime::new().unwrap();
-    let _guard = rt.enter();
-    HelloApp::run(Settings::default())
+    let rt = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    rt.block_on(async {
+        HelloApp::run(Settings::default())
+    })
 }
 
 #[derive(Debug, Default)]

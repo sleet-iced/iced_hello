@@ -1,4 +1,5 @@
 use reqwest;
+use serde_json::json;
 use crate::config::NetworkConfig;
 
 #[derive(Debug, Clone)]
@@ -15,26 +16,39 @@ impl NearClient {
     }
 
     pub async fn get_greeting(&self) -> Result<String, Box<dyn std::error::Error>> {
-        let fastnear_url = format!("{}/account/{}/view/get_greeting", 
-            self.config.get_rpc_url(),
-            self.config.contract_id
-        );
+        let args_base64 = base64::encode(json!({}).to_string());
+
+        let query = json!({
+            "jsonrpc": "2.0",
+            "id": "dontcare",
+            "method": "query",
+            "params": {
+                "request_type": "call_function",
+                "finality": "final",
+                "account_id": self.config.contract_id,
+                "method_name": "get_greeting",
+                "args_base64": args_base64
+            }
+        });
 
         let response = self.client
-            .get(&fastnear_url)
+            .post(&self.config.get_rpc_url())
+            .json(&query)
             .send()
             .await?
             .json::<serde_json::Value>()
             .await?;
 
-        if let Some(result) = response.get("result") {
-            // Remove surrounding quotes from the JSON string
-            let greeting = result.as_str()
-                .map(|s| s.trim_matches('"'))
-                .ok_or("Invalid greeting format")?;
-            Ok(greeting.to_string())
-        } else {
-            Err("No result field in response".into())
-        }
+        let result = response["result"]["result"]
+            .as_array()
+            .ok_or("Invalid response format")?;
+        
+        let result_bytes = base64::decode(result
+            .iter()
+            .map(|v| v.as_u64().unwrap_or(0) as u8)
+            .collect::<Vec<u8>>())?;
+            
+        let greeting = String::from_utf8(result_bytes)?;
+        Ok(greeting)
     }
 }
