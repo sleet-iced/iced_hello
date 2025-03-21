@@ -1,0 +1,21 @@
+[package]
+name = "hello-rust"
+version = "0.1.0"
+edition = "2021"
+description = "A simple counter application"
+authors = ["Your Name"]
+
+[package.metadata.bundle]
+name = "Counter"
+identifier = "com.example.counter"
+icon = ["icons/icon.icns"]
+version = "1.0.0"
+copyright = "Copyright (c) 2023 Your Name"
+category = "public.app-category.utilities"
+short_description = "A simple counter application"
+
+[dependencies]
+iced = "0.10.0"
+
+[build-dependencies]
+cargo-bundle = "0.6.0"
