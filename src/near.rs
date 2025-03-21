@@ -1,31 +1,28 @@
-use near_jsonrpc_client::JsonRpcClient;
-use near_primitives::types::FunctionArgs;
-use near_primitives::views::QueryRequest;
+use near_api::NearApi;
 use serde_json::json;
 use crate::config::NetworkConfig;
 
 pub struct NearClient {
     config: NetworkConfig,
-    rpc_client: JsonRpcClient,
+    api: NearApi,
 }
 
 impl NearClient {
     pub fn new() -> Self {
         let config = NetworkConfig::default();
-        let rpc_client = JsonRpcClient::connect(&config.node_url);
-        Self { config, rpc_client }
+        let api = NearApi::new(&config.node_url);
+        Self { config, api }
     }
 
     pub async fn get_greeting(&self) -> Result<String, Box<dyn std::error::Error>> {
-        let args = json!({}).to_string().into_bytes();
-        let query = QueryRequest::CallFunction {
-            account_id: self.config.contract_id.parse()?,
-            method_name: "get_greeting".to_string(),
-            args: FunctionArgs::from(args),
-        };
-
-        let result = self.rpc_client.call(query).await?;
-        let greeting: String = serde_json::from_slice(&result.result)?;
+        let args = json!({});
+        let result = self.api.view_function(
+            &self.config.contract_id,
+            "get_greeting",
+            args
+        ).await?;
+        
+        let greeting: String = serde_json::from_value(result)?;
         Ok(greeting)
     }
 }
