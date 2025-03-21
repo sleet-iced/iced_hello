@@ -7,7 +7,8 @@ mod near;
 
 use near::NearClient;
 
-pub fn main() -> iced::Result {
+#[tokio::main]
+pub async fn main() -> iced::Result {
     HelloApp::run(Settings::default())
 }
 

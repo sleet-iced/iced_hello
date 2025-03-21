@@ -18,7 +18,7 @@ impl NearClient {
 
     pub async fn get_greeting(&self) -> Result<String, Box<dyn std::error::Error>> {
         let fastnear_url = format!("{}/account/{}/view/get_greeting", 
-            self.config.get_fastnear_url(),
+            self.config.get_rpc_url(),
             self.config.contract_id
         );
 
@@ -26,9 +26,17 @@ impl NearClient {
             .get(&fastnear_url)
             .send()
             .await?
-            .text()
+            .json::<serde_json::Value>()
             .await?;
 
-        Ok(response)
+        if let Some(result) = response.get("result") {
+            if let Some(greeting) = result.as_str() {
+                Ok(greeting.to_string())
+            } else {
+                Err("Invalid greeting format".into())
+            }
+        } else {
+            Err("No result field in response".into())
+        }
     }
 }
