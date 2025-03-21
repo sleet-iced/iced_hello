@@ -4,6 +4,7 @@ use iced::executor;
 
 mod config;
 mod near;
+mod near_test;
 
 use near::NearClient;
 
