@@ -40,13 +40,14 @@ impl NearClient {
             .json::<serde_json::Value>()
             .await?;
 
-        let result = response["result"]["result"]
-            .as_str()
+        let result = response["result"]
+            .as_array()
             .ok_or("Invalid response format")?;
-        
-        let result_bytes = base64::decode(result)?;
-        let result_str = String::from_utf8(result_bytes)?;
-        let greeting: String = serde_json::from_str(&result_str)?;
+
+        let greeting = result
+            .iter()
+            .map(|n| n.as_u64().unwrap_or(0) as u8 as char)
+            .collect::<String>();
             
         Ok(greeting)
     }
