@@ -1,5 +1,7 @@
-use iced::widget::{container, text};
+use iced::widget::container;
+use iced::widget::image::Image;
 use iced::{executor, Application, Command, Element, Length, Settings, Theme};
+use std::path::PathBuf;
 
 pub fn main() -> iced::Result {
     let mut settings = Settings::default();
@@ -33,9 +35,9 @@ impl Application for HelloApp {
 
     fn view(&self) -> Element<Message> {
         let content = container(
-            text("🌨️")
-                .size(150)
-                .style(iced::theme::Text::Default)
+            Image::new(PathBuf::from("icons/icon.iconset/icon_256x256.png"))
+                .width(Length::Fixed(256.0))
+                .height(Length::Fixed(256.0))
         )
         .padding(20)
         .width(Length::Shrink)
