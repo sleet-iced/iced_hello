@@ -26,7 +26,7 @@ impl Application for HelloApp {
     }
 
     fn title(&self) -> String {
-        String::from("Sleet")
+        String::from("SLEET")
     }
 
     fn update(&mut self, _message: Message) -> Command<Message> {
@@ -61,9 +61,9 @@ impl container::StyleSheet for CustomStyle {
     fn appearance(&self, _style: &Self::Style) -> container::Appearance {
         container::Appearance {
             background: Some(iced::Background::Color(iced::Color::from_rgb(
-                0x7d as f32 / 255.0,
-                0x84 as f32 / 255.0,
-                0xb2 as f32 / 255.0,
+                0xf9 as f32 / 255.0,
+                0xf9 as f32 / 255.0,
+                0xed as f32 / 255.0,
             ))),
             ..Default::default()
         }
