@@ -32,7 +32,14 @@ impl Application for HelloApp {
     }
 
     fn view(&self) -> Element<Message> {
-        let content = text("❄️").size(50);
+        let content = container(
+            text("🌨️")
+                .size(150)
+                .style(iced::theme::Text::Default)
+        )
+        .padding(20)
+        .width(Length::Shrink)
+        .height(Length::Shrink);
 
         container(content)
             .width(Length::Fill)
