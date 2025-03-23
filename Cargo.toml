@@ -27,6 +27,7 @@ anyhow = "1.0"
 [[bin]]
 name = "hello"
 path = "src/main.rs"
+default-run = true
 
 [[bin]]
 name = "get_greeting"

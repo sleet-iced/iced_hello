@@ -1,6 +1,5 @@
 use iced::widget::{text, container};
-use iced::{Application, Length, Settings, Theme, executor, Element};
-use iced::application;
+use iced::{Application, Length, Settings, Theme, Element};
 use serde_json::json;
 use reqwest;
 
@@ -16,10 +15,9 @@ struct HelloApp {
 }
 
 impl Application for HelloApp {
-    type Theme = Theme;
-    type Renderer = application::Renderer;
-    type Executor = executor::Default;
     type Message = Message;
+    type Executor = iced::executor::Default;
+    type Theme = Theme;
     type Flags = ();
 
     fn new(_flags: ()) -> (Self, iced::Command<Self::Message>) {
@@ -37,44 +35,17 @@ impl Application for HelloApp {
         match message {
             Message::FetchGreeting => {
                 self.loading = true;
-                let config = std::fs::read_to_string("config/config.json")
-                    .expect("Missing config.json");
-                let config: serde_json::Value = serde_json::from_str(&config).unwrap();
-
                 iced::Command::perform(
-                    async move {
-                        let response = reqwest::Client::new()
-                            .post(config["rpc_url"].as_str().unwrap())
-                            .json(&json!({
-                                "jsonrpc": "2.0",
-                                "id": "dontcare",
-                                "method": "query",
-                                "params": {
-                                    "request_type": "call_function",
-                                    "account_id": config["contract"],
-                                    "method_name": "get_greeting",
-                                    "args_base64": "",
-                                    "finality": "final"
-                                }
-                            }))
-                            .send()
-                            .await;
-
-                        match response {
-                            Ok(res) => {
-                                let response_text = res.text().await.unwrap_or_default();
-                                let response_data: serde_json::Value = serde_json::from_str(&response_text)
-                                    .map_err(|e| format!("Failed to parse JSON response: {}", e))?;
-                                let result = response_data["result"]["result"]
-                                    .as_array()
-                                    .ok_or("Invalid response format")?;
-                                let greeting_bytes: Vec<u8> = result
-                                    .iter()
-                                    .map(|v| v.as_u64().unwrap_or_default() as u8)
-                                    .collect();
-                                Ok(String::from_utf8_lossy(&greeting_bytes).into_owned())
+                    async {
+                        match std::fs::read_to_string("config/greeting.json") {
+                            Ok(content) => {
+                                let greeting_data: serde_json::Value = serde_json::from_str(&content)
+                                    .map_err(|e| format!("Failed to parse greeting JSON: {}", e))?;
+                                Ok(greeting_data["greeting"].as_str()
+                                    .ok_or("Missing greeting field")?                                    
+                                    .to_string())
                             }
-                            Err(e) => Err(format!("Request failed: {}", e))
+                            Err(e) => Err(format!("Failed to read greeting file: {}", e))
                         }
                     },
                     Message::GreetingReceived,
@@ -144,7 +115,23 @@ impl Application for HelloApp {
 }
 
 pub fn main() -> iced::Result {
+    let rt = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    let _guard = rt.enter();
+    
+    // Keep the runtime alive without spawning unnecessary tasks
+    std::thread::spawn(move || {
+        rt.block_on(async {
+            tokio::signal::ctrl_c().await.ok();
+        });
+    });
+
     let mut settings = Settings::default();
     settings.default_text_size = 20.0;
+    settings.default_font = iced::Font::DEFAULT;
+    settings.antialiasing = true;
+
     HelloApp::run(settings)
 }
