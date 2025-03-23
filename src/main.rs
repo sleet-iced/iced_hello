@@ -57,7 +57,6 @@ impl Application for HelloApp {
                 iced::Command::perform(
                     async {
                         contract_greeting::fetch_and_save_contract_greeting()
-                            .await
                             .map_err(|e| e.to_string())?;
                         
                         match std::fs::read_to_string("config/greeting.json") {
@@ -148,13 +147,6 @@ pub fn main() -> iced::Result {
         .build()
         .unwrap();
     let _guard = rt.enter();
-    
-    // Keep the runtime alive without spawning unnecessary tasks
-    std::thread::spawn(move || {
-        rt.block_on(async {
-            tokio::signal::ctrl_c().await.ok();
-        });
-    });
 
     let mut settings = Settings::default();
     settings.default_text_size = 20.0;

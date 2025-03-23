@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use serde::Deserialize;
 use std::path::PathBuf;
+use tokio::runtime::Runtime;
 
 #[derive(Debug, Deserialize)]
 struct Config {
@@ -8,7 +9,14 @@ struct Config {
     rpc_url: String,
 }
 
-pub async fn fetch_and_save_contract_greeting() -> Result<()> {
+pub fn fetch_and_save_contract_greeting() -> Result<()> {
+    let rt = Runtime::new().context("Failed to create Tokio runtime")?;
+    rt.block_on(async {
+        fetch_and_save_contract_greeting_inner().await
+    })
+}
+
+async fn fetch_and_save_contract_greeting_inner() -> Result<()> {
     let config_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("config/config.json");
 
