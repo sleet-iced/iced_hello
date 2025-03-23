@@ -6,6 +6,7 @@ use super::styles::*;
 pub struct HelloView {
     greeting: String,
     loading: bool,
+    contract_loading: bool,
 }
 
 impl HelloView {
@@ -16,7 +17,7 @@ impl HelloView {
 
 impl HelloView {
     pub fn new(greeting: String, loading: bool) -> Self {
-        Self { greeting, loading }
+        Self { greeting, loading, contract_loading: false }
     }
 
     pub fn view(&self) -> Element<Message> {
@@ -28,11 +29,16 @@ impl HelloView {
             .padding(10)
             .style(iced::theme::Button::Secondary);
 
-        let (local_button, contract_button) = if self.loading {
-            (local_button.on_press_maybe(None), contract_button.on_press_maybe(None))
+        let local_button = if self.loading {
+            local_button.on_press_maybe(None)
         } else {
-            (local_button.on_press(Message::FetchLocalGreeting), 
-             contract_button.on_press(Message::FetchContractGreeting))
+            local_button.on_press(Message::FetchLocalGreeting)
+        };
+
+        let contract_button = if self.contract_loading {
+            contract_button.on_press_maybe(None)
+        } else {
+            contract_button.on_press(Message::FetchContractGreeting)
         };
 
         let greeting_display = container(
@@ -48,16 +54,20 @@ impl HelloView {
                 .size(28)
                 .style(iced::theme::Text::Color(title_text_color())),
             row![
-                if self.loading {
-                    Into::<Element<Message>>::into(
-                        container(
-                            text("Loading...")
-                                .style(iced::theme::Text::Color(loading_text_color()))
-                        ).width(Length::Fill)
-                    )
-                } else {
-                    row![local_button, contract_button].spacing(10).into()
-                }
+                row![local_button, contract_button].spacing(10),
+            if self.loading {
+                Into::<Element<Message>>::into(
+                    text("Loading local...")
+                        .style(iced::theme::Text::Color(loading_text_color()))
+                )
+            } else if self.contract_loading {
+                Into::<Element<Message>>::into(
+                    text("Loading contract...")
+                        .style(iced::theme::Text::Color(loading_text_color()))
+                )
+            } else {
+                Into::<Element<Message>>::into(text(""))
+            }
             ].spacing(10),
             greeting_display.width(Length::Fixed(300.0))
         ]
