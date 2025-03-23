@@ -5,6 +5,7 @@ use std::path::PathBuf;
 #[derive(Debug, Deserialize)]
 struct Config {
     contract: String,
+    rpc_url: String,
 }
 
 #[tokio::main]
@@ -17,7 +18,7 @@ async fn main() -> Result<()> {
             .with_context(|| format!("Failed to open config at {:?}", config_path))?
     ).context("Failed to parse config")?;
 
-    let rpc_url = "https://rpc.testnet.near.org";
+    let rpc_url = &config.rpc_url;
 
     let response = reqwest::Client::new()
         .post(rpc_url)
@@ -38,16 +39,17 @@ async fn main() -> Result<()> {
         .with_context(|| "RPC call failed")?;
 
     let response_text = response.text().await.with_context(|| "Failed to get response text")?;
-    println!("Raw response: {}", response_text);
     #[derive(Debug, serde::Deserialize)]
-struct RpcResponse {
-    result: RpcResult,
-}
+    struct RpcResponse {
+        result: RpcResult,
+    }
 
-#[derive(Debug, serde::Deserialize)]
-struct RpcResult {
-    result: Vec<u8>,
-}
+    #[derive(Debug, serde::Deserialize)]
+    struct RpcResult {
+        result: Vec<u8>,
+    }
+
+    println!("Raw response: {}", response_text);
 
     let response_data: RpcResponse = serde_json::from_str(&response_text).with_context(|| "Failed to parse JSON response")?;
     let greeting_bytes = response_data.result.result;

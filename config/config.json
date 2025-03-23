@@ -1,4 +1,5 @@
 {
   "network": "testnet",
-  "contract": "hello.sleet.testnet"
+  "contract": "hello.sleet.testnet",
+  "rpc_url": "https://rpc.testnet.near.org"
 }
