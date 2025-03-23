@@ -1,5 +1,6 @@
-use iced::{widget::text, widget::button, widget::container, widget::column, widget::row};
-use iced::{Application, Length, Settings, Theme, Alignment, alignment, Element, Renderer, executor};
+use iced::widget::{text, container};
+use iced::{Application, Length, Settings, Theme, executor, Element};
+use iced::application;
 use serde_json::json;
 use reqwest;
 
@@ -16,7 +17,7 @@ struct HelloApp {
 
 impl Application for HelloApp {
     type Theme = Theme;
-    type Renderer = Renderer;
+    type Renderer = application::Renderer;
     type Executor = executor::Default;
     type Message = Message;
     type Flags = ();
@@ -93,7 +94,7 @@ impl Application for HelloApp {
     }
 
     fn view(&self) -> iced::Element<'_, Message> {
-        let button: iced::widget::Button<'_, Message, iced::Renderer> = iced::widget::button("Get Greeting")
+        let button = iced::widget::button("Get Greeting")
             .padding(10)
             .style(iced::theme::Button::Primary);
 
@@ -117,10 +118,12 @@ impl Application for HelloApp {
                 .style(iced::theme::Text::Color(iced::Color::from_rgb(0.1, 0.1, 0.4))),
             iced::widget::row![
                 if self.loading {
-                    container(
-                        text("Loading...")
-                            .style(iced::theme::Text::Color(iced::Color::from_rgb(0.4, 0.4, 0.4)))
-                    ).width(Length::Fill).into()
+                    Into::<Element<Message>>::into(
+                        container(
+                            text("Loading...")
+                                .style(iced::theme::Text::Color(iced::Color::from_rgb(0.4, 0.4, 0.4)))
+                        ).width(Length::Fill)
+                    )
                 } else {
                     button.into()
                 }
