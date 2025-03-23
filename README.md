@@ -12,7 +12,6 @@ running and building
 ```sh
 # Main GUI application
 cargo run
-cargo run --bin hello
 
 # CLI utility
 cargo run --bin get_greeting

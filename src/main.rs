@@ -1,9 +1,12 @@
+mod contract_greeting;
+
 use iced::widget::{text, container};
 use iced::{Application, Length, Settings, Theme, Element};
 
 #[derive(Debug, Clone)]
 enum Message {
-    FetchGreeting,
+    FetchLocalGreeting,
+    FetchContractGreeting,
     GreetingReceived(Result<String, String>),
 }
 
@@ -31,10 +34,32 @@ impl Application for HelloApp {
 
     fn update(&mut self, message: Message) -> iced::Command<Message> {
         match message {
-            Message::FetchGreeting => {
+            Message::FetchLocalGreeting => {
                 self.loading = true;
                 iced::Command::perform(
                     async {
+                        match std::fs::read_to_string("config/greeting.json") {
+                            Ok(content) => {
+                                let greeting_data: serde_json::Value = serde_json::from_str(&content)
+                                    .map_err(|e| format!("Failed to parse greeting JSON: {}", e))?;
+                                Ok(greeting_data["greeting"].as_str()
+                                    .ok_or("Missing greeting field")?                                    
+                                    .to_string())
+                            }
+                            Err(e) => Err(format!("Failed to read greeting file: {}", e))
+                        }
+                    },
+                    Message::GreetingReceived,
+                )
+            }
+            Message::FetchContractGreeting => {
+                self.loading = true;
+                iced::Command::perform(
+                    async {
+                        contract_greeting::fetch_and_save_contract_greeting()
+                            .await
+                            .map_err(|e| e.to_string())?;
+                        
                         match std::fs::read_to_string("config/greeting.json") {
                             Ok(content) => {
                                 let greeting_data: serde_json::Value = serde_json::from_str(&content)
@@ -63,14 +88,19 @@ impl Application for HelloApp {
     }
 
     fn view(&self) -> iced::Element<'_, Message> {
-        let button = iced::widget::button("Get Greeting")
+        let local_button = iced::widget::button("Get Local Greeting")
             .padding(10)
             .style(iced::theme::Button::Primary);
 
-        let button = if self.loading {
-            button.on_press_maybe(None)
+        let contract_button = iced::widget::button("Get Contract Greeting")
+            .padding(10)
+            .style(iced::theme::Button::Secondary);
+
+        let (local_button, contract_button) = if self.loading {
+            (local_button.on_press_maybe(None), contract_button.on_press_maybe(None))
         } else {
-            button.on_press(Message::FetchGreeting)
+            (local_button.on_press(Message::FetchLocalGreeting), 
+             contract_button.on_press(Message::FetchContractGreeting))
         };
 
         let greeting_display = iced::widget::container(
@@ -94,7 +124,7 @@ impl Application for HelloApp {
                         ).width(Length::Fill)
                     )
                 } else {
-                    button.into()
+                    iced::widget::row![local_button, contract_button].spacing(10).into()
                 }
             ].spacing(10),
             greeting_display.width(Length::Fixed(300.0))
