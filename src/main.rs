@@ -1,18 +1,18 @@
 mod contract_greeting;
+mod ui;
 
-use iced::widget::{text, container};
-use iced::{Application, Length, Settings, Theme, Element};
+use iced::{Application, Settings, Theme, Element};
+use ui::HelloView;
 
 #[derive(Debug, Clone)]
-enum Message {
+pub enum Message {
     FetchLocalGreeting,
     FetchContractGreeting,
     GreetingReceived(Result<String, String>),
 }
 
 struct HelloApp {
-    greeting: String,
-    loading: bool,
+    view: HelloView,
 }
 
 impl Application for HelloApp {
@@ -23,8 +23,7 @@ impl Application for HelloApp {
 
     fn new(_flags: ()) -> (Self, iced::Command<Self::Message>) {
         (Self {
-            greeting: String::new(),
-            loading: false,
+            view: HelloView::new(String::new(), false),
         }, iced::Command::none())
     }
 
@@ -35,7 +34,7 @@ impl Application for HelloApp {
     fn update(&mut self, message: Message) -> iced::Command<Message> {
         match message {
             Message::FetchLocalGreeting => {
-                self.loading = true;
+                self.view = HelloView::new(self.view.greeting().to_string(), true);
                 iced::Command::perform(
                     async {
                         match std::fs::read_to_string("config/greeting.json") {
@@ -53,7 +52,7 @@ impl Application for HelloApp {
                 )
             }
             Message::FetchContractGreeting => {
-                self.loading = true;
+                self.view = HelloView::new(self.view.greeting().to_string(), true);
                 iced::Command::perform(
                     async {
                         contract_greeting::fetch_and_save_contract_greeting()
@@ -74,70 +73,18 @@ impl Application for HelloApp {
                 )
             }
             Message::GreetingReceived(Ok(greeting)) => {
-                self.greeting = greeting;
-                self.loading = false;
+                self.view = HelloView::new(greeting, false);
                 iced::Command::none()
             }
             Message::GreetingReceived(Err(e)) => {
-                self.greeting = e;
-                self.loading = false;
+                self.view = HelloView::new(e, false);
                 iced::Command::none()
             }
         }
     }
 
-    fn view(&self) -> iced::Element<'_, Message> {
-        let local_button = iced::widget::button("Get Local Greeting")
-            .padding(10)
-            .style(iced::theme::Button::Primary);
-
-        let contract_button = iced::widget::button("Get Contract Greeting")
-            .padding(10)
-            .style(iced::theme::Button::Secondary);
-
-        let (local_button, contract_button) = if self.loading {
-            (local_button.on_press_maybe(None), contract_button.on_press_maybe(None))
-        } else {
-            (local_button.on_press(Message::FetchLocalGreeting), 
-             contract_button.on_press(Message::FetchContractGreeting))
-        };
-
-        let greeting_display = iced::widget::container(
-            iced::widget::text(&self.greeting)
-                .size(16)
-                .horizontal_alignment(iced::alignment::Horizontal::Center)
-        )
-        .padding(10)
-        .style(iced::theme::Container::Box);
-
-        let content = iced::widget::column![
-            iced::widget::text("SLEET HELLO")
-                .size(28)
-                .style(iced::theme::Text::Color(iced::Color::from_rgb(0.1, 0.1, 0.4))),
-            iced::widget::row![
-                if self.loading {
-                    Into::<Element<Message>>::into(
-                        container(
-                            text("Loading...")
-                                .style(iced::theme::Text::Color(iced::Color::from_rgb(0.4, 0.4, 0.4)))
-                        ).width(Length::Fill)
-                    )
-                } else {
-                    iced::widget::row![local_button, contract_button].spacing(10).into()
-                }
-            ].spacing(10),
-            greeting_display.width(Length::Fixed(300.0))
-        ]
-        .spacing(20)
-        .padding(20)
-        .align_items(iced::Alignment::Center);
-
-        iced::widget::container(content)
-            .width(iced::Length::Fill)
-            .height(iced::Length::Fill)
-            .center_x()
-            .center_y()
-            .into()
+    fn view(&self) -> Element<Message> {
+        self.view.view()
     }
 }
 
