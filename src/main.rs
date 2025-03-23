@@ -1,7 +1,5 @@
 use iced::widget::{text, container};
 use iced::{Application, Length, Settings, Theme, Element};
-use serde_json::json;
-use reqwest;
 
 #[derive(Debug, Clone)]
 enum Message {
@@ -28,7 +26,7 @@ impl Application for HelloApp {
     }
 
     fn title(&self) -> String {
-        String::from("Hello Greeter")
+        String::from("SLEET HELLO")
     }
 
     fn update(&mut self, message: Message) -> iced::Command<Message> {
@@ -84,7 +82,7 @@ impl Application for HelloApp {
         .style(iced::theme::Container::Box);
 
         let content = iced::widget::column![
-            iced::widget::text("Hello Greeter")
+            iced::widget::text("SLEET HELLO")
                 .size(28)
                 .style(iced::theme::Text::Color(iced::Color::from_rgb(0.1, 0.1, 0.4))),
             iced::widget::row![

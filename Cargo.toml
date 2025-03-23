@@ -4,6 +4,7 @@ version = "0.0.1"
 edition = "2021"
 description = "🧊 a hello iced project by sleet for interacting with a hello conrtact on near"
 authors = ["SLEET.NEAR"]
+default-run = "hello"
 
 [package.metadata.bundle]
 name = "HELLO"
@@ -27,7 +28,6 @@ anyhow = "1.0"
 [[bin]]
 name = "hello"
 path = "src/main.rs"
-default-run = true
 
 [[bin]]
 name = "get_greeting"
