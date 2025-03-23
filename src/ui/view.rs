@@ -1,11 +1,17 @@
 use iced::widget::{text, container, button, column, row};
-use iced::{Length, Theme, Element, Alignment};
+use iced::{Length, Element, Alignment};
 use crate::Message;
 use super::styles::*;
 
 pub struct HelloView {
     greeting: String,
     loading: bool,
+}
+
+impl HelloView {
+    pub fn greeting(&self) -> &str {
+        &self.greeting
+    }
 }
 
 impl HelloView {
