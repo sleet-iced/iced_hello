@@ -1,4 +1,4 @@
-use iced::{Color, Theme};
+use iced::Color;
 
 pub fn title_text_color() -> Color {
     Color::from_rgb(0.1, 0.1, 0.4)
