@@ -41,7 +41,7 @@ impl HelloView {
                 .horizontal_alignment(iced::alignment::Horizontal::Center)
         )
         .padding(10)
-        .style(iced::theme::Container::Box);
+        .style(super::styles::greeting_container_style());
 
         let content = column![
             text("SLEET HELLO")
