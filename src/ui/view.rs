@@ -53,22 +53,24 @@ impl HelloView {
             text("SLEET HELLO")
                 .size(28)
                 .style(iced::theme::Text::Color(title_text_color())),
-            row![
-                row![local_button, contract_button].spacing(10),
+            row![local_button, contract_button].spacing(10).align_items(Alignment::Center),
             if self.loading {
                 Into::<Element<Message>>::into(
-                    text("Loading local...")
-                        .style(iced::theme::Text::Color(loading_text_color()))
+                    container(
+                        text("Loading local...")
+                            .style(iced::theme::Text::Color(loading_text_color()))
+                    ).center_x()
                 )
             } else if self.contract_loading {
                 Into::<Element<Message>>::into(
-                    text("Loading contract...")
-                        .style(iced::theme::Text::Color(loading_text_color()))
+                    container(
+                        text("Loading contract...")
+                            .style(iced::theme::Text::Color(loading_text_color()))
+                    ).center_x()
                 )
             } else {
                 Into::<Element<Message>>::into(text(""))
-            }
-            ].spacing(10),
+            },
             greeting_display.width(Length::Fixed(300.0))
         ]
         .spacing(20)
