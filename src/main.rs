@@ -1,11 +1,7 @@
-use iced::widget::container;
-use iced::widget::image::Image;
-use iced::{executor, Application, Command, Element, Length, Settings, Theme};
-use std::path::PathBuf;
-
-use near_api::JsonRpcConnection;
+use iced::{widget::text, widget::button, widget::container, widget::column, widget::row};
+use iced::{Application, Length, Settings, Theme, Alignment, alignment, Element, Renderer, executor};
 use serde_json::json;
-use std::sync::Arc;
+use reqwest;
 
 #[derive(Debug, Clone)]
 enum Message {
@@ -18,22 +14,24 @@ struct HelloApp {
     loading: bool,
 }
 
-impl iced::Application for HelloApp {
+impl Application for HelloApp {
+    type Theme = Theme;
+    type Renderer = Renderer;
+    type Executor = executor::Default;
     type Message = Message;
-    type Executor = iced::executor::Default;
     type Flags = ();
-    
+
     fn new(_flags: ()) -> (Self, iced::Command<Self::Message>) {
         (Self {
             greeting: String::new(),
             loading: false,
         }, iced::Command::none())
     }
-    
+
     fn title(&self) -> String {
         String::from("Hello Greeter")
     }
-    
+
     fn update(&mut self, message: Message) -> iced::Command<Message> {
         match message {
             Message::FetchGreeting => {
@@ -44,23 +42,39 @@ impl iced::Application for HelloApp {
 
                 iced::Command::perform(
                     async move {
-                        let rpc = JsonRpcConnection::new(config["rpc_url"].as_str().unwrap());
-                        let result = rpc
-                            .call(
-                                "query",
-                                json!({
+                        let response = reqwest::Client::new()
+                            .post(config["rpc_url"].as_str().unwrap())
+                            .json(&json!({
+                                "jsonrpc": "2.0",
+                                "id": "dontcare",
+                                "method": "query",
+                                "params": {
                                     "request_type": "call_function",
-                                    "account_id": config["contract_id"],
+                                    "account_id": config["contract"],
                                     "method_name": "get_greeting",
                                     "args_base64": "",
-                                    "finality": "optimistic"
-                                })
-                            )
+                                    "finality": "final"
+                                }
+                            }))
+                            .send()
                             .await;
 
-                        result
-                            .map(|res| String::from_utf8_lossy(&res.result).into_owned())
-                            .map_err(|e| format!("Error: {}", e))
+                        match response {
+                            Ok(res) => {
+                                let response_text = res.text().await.unwrap_or_default();
+                                let response_data: serde_json::Value = serde_json::from_str(&response_text)
+                                    .map_err(|e| format!("Failed to parse JSON response: {}", e))?;
+                                let result = response_data["result"]["result"]
+                                    .as_array()
+                                    .ok_or("Invalid response format")?;
+                                let greeting_bytes: Vec<u8> = result
+                                    .iter()
+                                    .map(|v| v.as_u64().unwrap_or_default() as u8)
+                                    .collect();
+                                Ok(String::from_utf8_lossy(&greeting_bytes).into_owned())
+                            }
+                            Err(e) => Err(format!("Request failed: {}", e))
+                        }
                     },
                     Message::GreetingReceived,
                 )
@@ -77,9 +91,9 @@ impl iced::Application for HelloApp {
             }
         }
     }
-    
+
     fn view(&self) -> iced::Element<'_, Message> {
-        let button = iced::widget::button("Get Greeting")
+        let button: iced::widget::Button<'_, Message, iced::Renderer> = iced::widget::button("Get Greeting")
             .padding(10)
             .style(iced::theme::Button::Primary);
 
@@ -103,15 +117,15 @@ impl iced::Application for HelloApp {
                 .style(iced::theme::Text::Color(iced::Color::from_rgb(0.1, 0.1, 0.4))),
             iced::widget::row![
                 if self.loading {
-                    iced::widget::container(
-                        iced::widget::text("Loading...")
+                    container(
+                        text("Loading...")
                             .style(iced::theme::Text::Color(iced::Color::from_rgb(0.4, 0.4, 0.4)))
-                    ).into()
+                    ).width(Length::Fill).into()
                 } else {
-                    button
-                },
+                    button.into()
+                }
             ].spacing(10),
-            greeting_display.width(Length::Units(300))
+            greeting_display.width(Length::Fixed(300.0))
         ]
         .spacing(20)
         .padding(20)
@@ -130,7 +144,4 @@ pub fn main() -> iced::Result {
     let mut settings = Settings::default();
     settings.default_text_size = 20.0;
     HelloApp::run(settings)
-}
-
-
 }
